@@ -67,7 +67,7 @@ int main() {
     }
     else if (command == echo_command)
     {
-      std::cout << parameter;
+      std::cout << parameter << "\n";
     }
   }
 }
