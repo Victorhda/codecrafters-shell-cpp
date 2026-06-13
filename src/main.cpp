@@ -4,35 +4,34 @@
 #include <string_view>
 
 
-size_t GetCommandPos(const std::string& inUserInput, const std::array<std::string_view, 2> inCommands)
+size_t GetCommandEndPos(const std::string& inUserInput)
 {
-  std::size_t command_pos = std::string::npos;
-  std::string_view delimiter = " ";
+  std::string_view command_delimiter = " ";
+  std::size_t command_end_pos = inUserInput.find(command_delimiter);
 
-  for (std::string_view command: inCommands)
+  if (command_end_pos != std::string::npos)
   {
-    command_pos = inUserInput.find(command);
-   
-    if (command_pos != std::string::npos)
-      return command_pos + command.length();
+    return command_end_pos;
   }
-  return command_pos;
+
+  return inUserInput.length();
 }
 
 
-std::string GetCommandValue(const std::string& inUserInput, const size_t& inCommandPos)
+std::string GetCommandValue(const std::string& inUserInput, const size_t& inCommandEndPos)
 {
-  return inUserInput.substr(0, inCommandPos);
+  return inUserInput.substr(0, inCommandEndPos);
 }
 
 
-std::string GetCommandParameters(const std::string& inUserInput, const size_t& inCommandPos)
+std::string GetCommandParameters(const std::string& inUserInput, const size_t& inCommandEndPos)
 {
-  return inUserInput.substr(inCommandPos);
+  return inUserInput.substr(inCommandEndPos + 1);
 }
 
 
-int main() {
+int main() 
+{
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
@@ -40,9 +39,10 @@ int main() {
   bool is_running = true;
 
   std::string_view exit_command = "exit";
-  std::string_view echo_command = "echo ";
+  std::string_view echo_command = "echo";
+  std::string_view type_command = "type";
 
-  std::array<std::string_view, 2> commands = {exit_command, echo_command};
+  std::array<std::string_view, 3> commands = {exit_command, echo_command, type_command};
   
   while (is_running)
   {
@@ -52,16 +52,9 @@ int main() {
     std::string input;
     std::getline(std::cin, input);
 
-    size_t command_pos = GetCommandPos(input, commands);
-    if (command_pos == std::string::npos)
-    {
-      std::cout << input << ": command not found";
-      std::cout << "\n";
-      continue;
-    }
-      
-    std::string command = GetCommandValue(input, command_pos);
-    std::string parameter = GetCommandParameters(input, command_pos);
+    size_t command_end_pos = GetCommandEndPos(input);
+    std::string command = GetCommandValue(input, command_end_pos);
+    std::string parameter = GetCommandParameters(input, command_end_pos);
 
     if (command == exit_command)
     {
@@ -70,6 +63,30 @@ int main() {
     else if (command == echo_command)
     {
       std::cout << parameter << "\n";
+    }
+    else if (command == type_command)
+    {
+      bool is_valid = false;
+
+      for (std::string_view available_command: commands)
+      {
+        if (parameter == available_command)
+        {
+          is_valid = true;
+          
+        }
+      }
+
+      if (is_valid)
+        std::cout << parameter << " is a shell builtin" << "\n";
+      else
+        std::cout << parameter << ": not found" << "\n";
+    }
+    else
+    {
+      std::cout << input << ": command not found";
+      std::cout << "\n";
+      continue;
     }
   }
 }
