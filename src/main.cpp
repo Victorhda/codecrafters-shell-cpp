@@ -81,6 +81,8 @@ int main()
         std::cout << parameter << " is a shell builtin" << "\n";
       else
         std::cout << parameter << ": not found" << "\n";
+
+      continue;
     }
     else
     {
