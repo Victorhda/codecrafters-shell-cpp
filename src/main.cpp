@@ -13,7 +13,8 @@ enum CommandId
 {
   Exit,
   Echo,
-  Type
+  Type,
+  Pwd
 };
 
 
@@ -194,6 +195,12 @@ void ExecuteEcho(const std::string& inMessage)
 }
 
 
+void ExecutePwd()
+{
+  std::cout << std::filesystem::current_path() << "\n";
+}
+
+
 int main() 
 {
   // Flush after every std::cout / std:cerr
@@ -202,7 +209,12 @@ int main()
 
   const bool is_running = true;
 
-  std::map<const std::string_view, const CommandId> commands = {{"exit", CommandId::Exit}, {"echo", CommandId::Echo}, {"type", CommandId::Type}};
+  std::map<const std::string_view, const CommandId> commands = {
+    {"exit", CommandId::Exit}, 
+    {"echo", CommandId::Echo}, 
+    {"type", CommandId::Type},
+    {"pwd", CommandId::Pwd}
+  };
   
   while (is_running)
   {
@@ -220,24 +232,27 @@ int main()
     {
         switch (iterator->second)
         {
-            case CommandId::Exit:
-                exit(0);
-            case CommandId::Echo:
-                ExecuteEcho(parameter_section);
-                continue;
-            case CommandId::Type:
-                ExecuteType(parameter_section, commands);
-                continue;
+          case CommandId::Exit:
+            exit(0);
+          case CommandId::Echo:
+            ExecuteEcho(parameter_section);
+            continue;
+          case CommandId::Type:
+            ExecuteType(parameter_section, commands);
+            continue;
+          case CommandId::Pwd:
+            ExecutePwd();
+            continue;
         }
     }
     else
     {
-        if (ExecuteExternal(command_section, parameter_section))
-        {
-            continue;
-        }
-        
-        std::cout << input << ": command not found\n";
+      if (ExecuteExternal(command_section, parameter_section))
+      {
+          continue;
+      }
+      
+      std::cout << input << ": command not found\n";
     }
   }
 }
