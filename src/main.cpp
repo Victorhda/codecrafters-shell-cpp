@@ -86,7 +86,7 @@ void GetExecutableDirectory(const std::string& inCommandName, const std::vector<
       {
         if (SystemPathExists(entry.path()))
         {
-            outExecutableDirectory = entry.path().relative_path().replace_extension("");
+            outExecutableDirectory = entry.path();
             return; 
         }
       }
@@ -157,7 +157,7 @@ int main()
         GetExecutableDirectory(parameter, system_paths, executable_directory);
         if (!executable_directory.empty())
         {
-          std::cout << parameter << " is " << executable_directory.string() << "\n";
+          std::cout << parameter << " is " << executable_directory.replace_extension("").string() << "\n";
           continue;
         }
       }
