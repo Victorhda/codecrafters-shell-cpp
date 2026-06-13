@@ -7,12 +7,12 @@ int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
 
-  // TODO: Uncomment the code below to pass the first stage
   std::cout << "$ ";
   
+  // Get user input as string
   std::string input;
-
   std::cin >> input;
 
+  // Output command not found
   std::cout << input << ": command not found";
 }
