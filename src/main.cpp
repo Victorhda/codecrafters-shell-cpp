@@ -19,7 +19,12 @@ int main() {
     std::string input;
     std::cin >> input;
 
+    std::string exit_command = "exit";
+
     // Output command not found
+    if (input == exit_command)
+      exit(0);
+
     std::cout << input << ": command not found";
     
     std::cout << "\n";
