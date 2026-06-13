@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <ranges>
 #include <system_error>
+#include <vector>
 
 
 const std::size_t GetCommandEndPos(const std::string& inUserInput)
