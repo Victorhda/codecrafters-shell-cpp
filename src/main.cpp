@@ -7,6 +7,7 @@
 size_t GetCommandPos(const std::string& inUserInput, const std::array<std::string_view, 2> inCommands)
 {
   std::size_t command_pos = std::string::npos;
+  std::string_view delimiter = " ";
 
   for (std::string_view command: inCommands)
   {
@@ -56,6 +57,7 @@ int main() {
     {
       std::cout << input << ": command not found";
       std::cout << "\n";
+      continue;
     }
       
     std::string command = GetCommandValue(input, command_pos);
