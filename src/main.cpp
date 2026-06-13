@@ -145,15 +145,12 @@ int main()
       std::vector<std::filesystem::path> system_paths; 
       GetSystemPaths(system_paths);
 
-      if (system_paths.size() > 0)
+      std::filesystem::path executable_directory;
+      GetExecutableDirectory(parameter, system_paths, executable_directory);
+      if (!executable_directory.empty())
       {
-        std::filesystem::path executable_directory;
-        GetExecutableDirectory(parameter, system_paths, executable_directory);
-        if (!executable_directory.empty())
-        {
-          std::cout << parameter << " is " << executable_directory << "\n";
-          continue;
-        }
+        std::cout << parameter << " is " << executable_directory << "\n";
+        continue;
       }
       
       std::cout << parameter << ": not found" << "\n";
