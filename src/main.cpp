@@ -26,7 +26,12 @@ std::string GetCommandValue(const std::string& inUserInput, const size_t& inComm
 
 std::string GetCommandParameters(const std::string& inUserInput, const size_t& inCommandEndPos)
 {
-  return inUserInput.substr(inCommandEndPos + 1);
+  if (inUserInput.length() >= inCommandEndPos + 1)
+  {
+    return inUserInput.substr(inCommandEndPos + 1);
+  }
+  else
+    return "";
 }
 
 
