@@ -197,7 +197,7 @@ void ExecuteEcho(const std::string& inMessage)
 
 void ExecutePwd()
 {
-  std::cout << std::filesystem::current_path() << "\n";
+  std::cout << std::filesystem::current_path().string() << "\n";
 }
 
 
@@ -252,7 +252,7 @@ int main()
           continue;
       }
       
-      std::cout << input << ": command not found\n";
+      std::cout << input << ": command not found" << "\n";
     }
   }
 }
