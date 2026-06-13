@@ -43,7 +43,11 @@ void GetSystemPaths(std::vector<std::filesystem::path>& outSystemPaths)
 {
   std::string env_paths = std::getenv("PATH");
   
-  char delimiter = ';';
+  char delimiter;
+  if (env_paths.find(';') != std::string::npos)
+    delimiter = ';';
+  else if (env_paths.find(':') != std::string::npos)
+    delimiter = ':';
 
   auto split_paths = env_paths | std::views::split(delimiter);
   for (const auto& path : split_paths)
@@ -64,17 +68,11 @@ void GetSystemPaths(std::vector<std::filesystem::path>& outSystemPaths)
 
 void GetExecutableDirectory(const std::string& inCommandName, const std::vector<std::filesystem::path>& inPathsToLook, std::filesystem::path& outExecutableDirectory)
 {
-  std::string command_with_exe = inCommandName;
-  if (command_with_exe.rfind(".exe") == std::string::npos) 
-  {
-      command_with_exe += ".exe";
-  }
-
   for (const std::filesystem::path& path : inPathsToLook)
   {
     for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(path, std::filesystem::directory_options::skip_permission_denied))
     {
-      if(inCommandName == entry.path().filename().string() || command_with_exe == entry.path().filename().string())
+      if(inCommandName == entry.path().stem().string() || inCommandName == entry.path().filename().string())
       {
         std::error_code error_code;
         std::filesystem::file_status file_status = std::filesystem::status(entry.path(), error_code);
@@ -146,12 +144,15 @@ int main()
       std::vector<std::filesystem::path> system_paths; 
       GetSystemPaths(system_paths);
 
-      std::filesystem::path executable_directory;
-      GetExecutableDirectory(parameter, system_paths, executable_directory);
-      if (!executable_directory.empty())
+      if (system_paths.size() > 0)
       {
-        std::cout << parameter << " is " << executable_directory << "\n";
-        continue;
+        std::filesystem::path executable_directory;
+        GetExecutableDirectory(parameter, system_paths, executable_directory);
+        if (!executable_directory.empty())
+        {
+          std::cout << parameter << " is " << executable_directory << "\n";
+          continue;
+        }
       }
       
       std::cout << parameter << ": not found" << "\n";
