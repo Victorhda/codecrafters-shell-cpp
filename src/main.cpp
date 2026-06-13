@@ -27,7 +27,9 @@ bool PathIsExecutable(const std::filesystem::path inPath)
   std::filesystem::file_status path_status = std::filesystem::status(inPath, error_code);
   std::filesystem::perms permissions = path_status.permissions();
 
-  if (error_code.value() == 0 and permissions == std::filesystem::perms::owner_exec)
+  std::filesystem::perms exec_mask = std::filesystem::perms::owner_exec | std::filesystem::perms::group_exec | std::filesystem::perms::others_exec;
+
+  if ((permissions & exec_mask) != std::filesystem::perms::none)
   {
     return true;
   }
