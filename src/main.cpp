@@ -157,7 +157,7 @@ int main()
         GetExecutableDirectory(parameter, system_paths, executable_directory);
         if (!executable_directory.empty())
         {
-          std::cout << parameter << " is " << executable_directory << "\n";
+          std::cout << parameter << " is " << executable_directory.string() << "\n";
           continue;
         }
       }
