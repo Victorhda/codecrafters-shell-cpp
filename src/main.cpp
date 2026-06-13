@@ -6,6 +6,16 @@
 #include <ranges>
 #include <system_error>
 #include <vector>
+#include <map>
+
+
+enum CommandId
+{
+  Exit,
+  Echo,
+  Type
+};
+
 
 
 bool PathExists(const std::filesystem::path inPath)
@@ -111,6 +121,79 @@ void GetExecutableDirectory(const std::string& inCommandName, const std::vector<
 }
 
 
+void FindExecutablePath(const std::string& inName, std::filesystem::path& outPath)
+{
+  std::vector<std::filesystem::path> system_paths; 
+  GetSystemPaths(system_paths);
+
+  if (system_paths.size() > 0)
+  {
+    GetExecutableDirectory(inName, system_paths, outPath);
+  }
+}
+
+
+bool IsShellBuiltin(const std::string& inName, const std::map<const std::string_view, const CommandId>& inCommands)
+{
+  for (const auto& [command_name, command_id] : inCommands)
+  {
+    if (inName == command_name)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+void ExecuteType(const std::string& inCommandName, const std::map<const std::string_view, const CommandId>& inCommands)
+{
+  if (IsShellBuiltin(inCommandName, inCommands))
+  {
+    std::cout << inCommandName << " is a shell builtin" << "\n"; 
+    return;
+  }
+
+  std::filesystem::path executable_path;
+  FindExecutablePath(inCommandName, executable_path);
+
+  if (!executable_path.empty())
+  {
+    std::cout << inCommandName << " is " << executable_path.replace_extension("").string() << "\n";
+    return;
+  }
+
+  std::cout << inCommandName << ": not found" << "\n";
+}
+
+
+void RunExecutable(const std::filesystem::path& inPath, const std::string& inArguments)
+{
+  std::string command = "\"" + inPath.stem().string() + "\" " + inArguments;
+  system(command.c_str());
+}
+
+
+bool ExecuteExternal(const std::string& inName, const std::string& inArguments)
+{
+  std::filesystem::path executable_path;
+  FindExecutablePath(inName, executable_path);
+
+  if (!executable_path.empty())
+  {
+    RunExecutable(executable_path, inArguments);
+    return true;
+  }
+  return false;
+}
+
+
+void ExecuteEcho(const std::string& inMessage)
+{
+  std::cout << inMessage << "\n";
+}
+
+
 int main() 
 {
   // Flush after every std::cout / std:cerr
@@ -119,11 +202,7 @@ int main()
 
   const bool is_running = true;
 
-  const std::string_view exit_command = "exit";
-  const std::string_view echo_command = "echo";
-  const std::string_view type_command = "type";
-
-  std::array<const std::string_view, 3> commands = {exit_command, echo_command, type_command};
+  std::map<const std::string_view, const CommandId> commands = {{"exit", CommandId::Exit}, {"echo", CommandId::Echo}, {"type", CommandId::Type}};
   
   while (is_running)
   {
@@ -134,58 +213,31 @@ int main()
     std::getline(std::cin, input);
 
     const std::size_t command_end_pos = GetCommandEndPos(input);
-    const std::string command = GetCommandValue(input, command_end_pos);
-    const std::string parameter = GetCommandParameters(input, command_end_pos);
+    const std::string command_section = GetCommandValue(input, command_end_pos);
+    const std::string parameter_section = GetCommandParameters(input, command_end_pos);
 
-    if (command == exit_command)
+    if (std::map<const std::string_view, const CommandId>::iterator iterator = commands.find(command_section); iterator != commands.end())
     {
-      exit(0);
-    }
-    else if (command == echo_command)
-    {
-      std::cout << parameter << "\n";
-    }
-    else if (command == type_command)
-    {
-      bool is_valid = false;
-
-      for (std::string_view available_command: commands)
-      {
-        if (parameter == available_command)
+        switch (iterator->second)
         {
-          is_valid = true;   
-          break;
+            case CommandId::Exit:
+                exit(0);
+            case CommandId::Echo:
+                ExecuteEcho(parameter_section);
+                continue;
+            case CommandId::Type:
+                ExecuteType(parameter_section, commands);
+                continue;
         }
-      }
-
-      if (is_valid)
-      {
-        std::cout << parameter << " is a shell builtin" << "\n";
-        continue;
-      }
-
-      std::vector<std::filesystem::path> system_paths; 
-      GetSystemPaths(system_paths);
-
-      if (system_paths.size() > 0)
-      {
-        std::filesystem::path executable_directory;
-        GetExecutableDirectory(parameter, system_paths, executable_directory);
-        if (!executable_directory.empty())
-        {
-          std::cout << parameter << " is " << executable_directory.replace_extension("").string() << "\n";
-          continue;
-        }
-      }
-      
-      std::cout << parameter << ": not found" << "\n";
-      continue;
     }
     else
     {
-      std::cout << input << ": command not found";
-      std::cout << "\n";
-      continue;
+        if (ExecuteExternal(command_section, parameter_section))
+        {
+            continue;
+        }
+        
+        std::cout << input << ": command not found\n";
     }
   }
 }
