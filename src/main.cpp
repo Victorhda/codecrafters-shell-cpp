@@ -8,6 +8,19 @@
 #include <vector>
 
 
+bool SystemPathExists(const std::filesystem::path inPath)
+{
+  std::error_code error_code;
+  std::filesystem::file_status path_status = std::filesystem::status(inPath, error_code);
+
+  if (error_code.value() == 0 && std::filesystem::exists(path_status))
+  {
+    return true;
+  }
+  return false;
+}
+
+
 const std::size_t GetCommandEndPos(const std::string& inUserInput)
 {
   char command_delimiter = ' ';
@@ -55,10 +68,7 @@ void GetSystemPaths(std::vector<std::filesystem::path>& outSystemPaths)
     std::string_view system_path(path.data(), path.size());
     std::filesystem::path parsed_path(system_path);
     
-    std::error_code error_code;
-    std::filesystem::file_status path_status = std::filesystem::status(parsed_path, error_code);
-
-    if (error_code.value() == 0 && std::filesystem::exists(path_status))
+    if (SystemPathExists(parsed_path))
     {
       outSystemPaths.push_back(parsed_path);
     }
@@ -74,12 +84,9 @@ void GetExecutableDirectory(const std::string& inCommandName, const std::vector<
     {
       if(inCommandName == entry.path().stem().string() || inCommandName == entry.path().filename().string())
       {
-        std::error_code error_code;
-        std::filesystem::file_status file_status = std::filesystem::status(entry.path(), error_code);
-
-        if (error_code.value() == 0 && std::filesystem::is_regular_file(file_status))
+        if (SystemPathExists(entry.path()))
         {
-            outExecutableDirectory = entry.path();
+            outExecutableDirectory = entry.path().relative_path().replace_extension("");
             return; 
         }
       }
