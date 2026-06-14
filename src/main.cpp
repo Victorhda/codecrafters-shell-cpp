@@ -9,6 +9,13 @@
 #include <map>
 
 
+#ifdef _WIN32
+    constexpr char PATH_DELIMITER = ';';
+#else
+    constexpr char PATH_DELIMITER = ':';
+#endif
+
+
 enum CommandId
 {
   Exit,
@@ -19,27 +26,6 @@ enum CommandId
 };
 
 
-const std::string GetHomeDirectory()
-{
-  const char* result = std::getenv("HOME");
-  if (result != nullptr)
-  {
-    return result;
-  }
-
-  #ifdef _WIN32
-    const char* user_profile = std::getenv("USERPROFILE");
-    if (user_profile != nullptr)
-    {
-      return user_profile;
-    }
-  #endif
-
-  return "";
-}
-
-
-
 const std::string GetEnvironmentVariable(const char* inName)
 {
   const char* result = std::getenv(inName);
@@ -48,6 +34,20 @@ const std::string GetEnvironmentVariable(const char* inName)
     return result;
   }
   return "";
+}
+
+
+const std::string GetHomeDirectory()
+{
+  std::string result("");
+
+  #ifdef _WIN32
+    result = GetEnvironmentVariable("USERPROFILE");
+  #elif __linux__
+    result = GetEnvironmentVariable("HOME");
+  #endif
+
+  return result;
 }
 
 
@@ -84,7 +84,6 @@ const std::size_t GetCommandEndPos(const std::string& inUserInput)
 {
   char command_delimiter = ' ';
   std::size_t command_end_pos = inUserInput.find(command_delimiter);
-
   if (command_end_pos != std::string::npos)
   {
     return command_end_pos;
@@ -115,14 +114,11 @@ const std::string GetCommandParameters(const std::string& inUserInput, const siz
 void GetSystemPaths(std::vector<std::filesystem::path>& outSystemPaths)
 {
   std::string env_paths = GetEnvironmentVariable("PATH");
-  
-  char delimiter = ':';
 
-  auto split_paths = env_paths | std::views::split(delimiter);
+  auto split_paths = env_paths | std::views::split(PATH_DELIMITER);
   for (const auto& path : split_paths)
   {
-    std::string_view system_path(path.data(), path.size());
-    std::filesystem::path parsed_path(system_path);
+    std::filesystem::path parsed_path(path.begin(), path.end());
     
     if (PathExists(parsed_path))
     {
@@ -218,8 +214,60 @@ bool ExecuteExternal(const std::string& inName, const std::string& inArguments)
 }
 
 
-void ExecuteEcho(const std::string& inMessage)
+void FilterEmptyQuotation(std::string& inMessage)
 {
+  std::string double_simple = "\'\'";
+  std::string double_double = "\"\"";
+  
+  while (inMessage.find(double_simple) != std::string::npos)
+  {
+    std::size_t position = inMessage.find(double_simple);
+    inMessage.erase(position, 2);
+  }
+
+  while (inMessage.find(double_double) != std::string::npos)
+  {
+    std::size_t position = inMessage.find(double_simple);
+    inMessage.erase(position, 2);
+  }
+}
+
+
+void FilterOuterQuotation(std::string& inMessage)
+{
+  char simple_quote = '\'';
+  char double_quote = '\"';
+
+  if (inMessage.front() == simple_quote || inMessage.front() == double_quote)
+  {
+    inMessage.erase(0, 1);
+  }
+  if (inMessage.back() == simple_quote || inMessage.back() == double_quote)
+  {
+    inMessage.erase(inMessage.length() - 1, 1);
+  }
+}
+
+
+void ExecuteEcho(std::string& inMessage)
+{ 
+  char front = inMessage.front();
+  char back = inMessage.back();
+  char simple_quote = '\'';
+  char double_quote = '\"';
+
+  FilterOuterQuotation(inMessage);
+  
+  FilterEmptyQuotation(inMessage);
+
+  if (!((front == simple_quote || front == double_quote) && (back == simple_quote || front == double_quote)))
+  {
+    while (inMessage.find("  ") != std::string::npos)
+    {
+      std::size_t double_space = inMessage.find("  ");
+      inMessage.erase(double_space, 1);
+    }
+  }
   std::cout << inMessage << "\n";
 }
 
@@ -228,6 +276,7 @@ void ExecutePwd()
 {
   std::cout << std::filesystem::current_path().string() << "\n";
 }
+
 
 void ExecuteCd(const std::string& inArgument)
 {
@@ -277,7 +326,7 @@ int main()
 
     const std::size_t command_end_pos = GetCommandEndPos(input);
     const std::string command_section = GetCommandValue(input, command_end_pos);
-    const std::string parameter_section = GetCommandParameters(input, command_end_pos);
+    std::string parameter_section = GetCommandParameters(input, command_end_pos);
 
     if (std::map<const std::string_view, const CommandId>::iterator iterator = commands.find(command_section); iterator != commands.end())
     {
