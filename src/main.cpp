@@ -14,12 +14,12 @@ enum CommandId
   Exit,
   Echo,
   Type,
-  Pwd
+  Pwd,
+  Cd
 };
 
 
-
-bool PathExists(const std::filesystem::path inPath)
+bool PathExists(const std::filesystem::path& inPath)
 {
   std::error_code error_code;
   std::filesystem::file_status path_status = std::filesystem::status(inPath, error_code);
@@ -32,7 +32,7 @@ bool PathExists(const std::filesystem::path inPath)
 }
 
 
-bool PathIsExecutable(const std::filesystem::path inPath)
+bool PathIsExecutable(const std::filesystem::path& inPath)
 {
   std::error_code error_code;
   std::filesystem::file_status path_status = std::filesystem::status(inPath, error_code);
@@ -200,6 +200,18 @@ void ExecutePwd()
   std::cout << std::filesystem::current_path().string() << "\n";
 }
 
+void ExecuteCd(const std::string& inDirectoryName)
+{
+  std::filesystem::path directory(inDirectoryName);
+  if (PathExists(directory))
+  {
+    std::filesystem::current_path(directory);
+    return;
+  }
+
+  std::cout << "cd: " << directory.string() << ": No such file or directory" << "\n";
+}
+
 
 int main() 
 {
@@ -213,7 +225,8 @@ int main()
     {"exit", CommandId::Exit}, 
     {"echo", CommandId::Echo}, 
     {"type", CommandId::Type},
-    {"pwd", CommandId::Pwd}
+    {"pwd", CommandId::Pwd},
+    {"cd", CommandId::Cd}
   };
   
   while (is_running)
@@ -242,6 +255,9 @@ int main()
             continue;
           case CommandId::Pwd:
             ExecutePwd();
+            continue;
+          case CommandId::Cd:
+            ExecuteCd(parameter_section);
             continue;
         }
     }
