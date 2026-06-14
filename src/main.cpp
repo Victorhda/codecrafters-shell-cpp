@@ -214,60 +214,101 @@ bool ExecuteExternal(const std::string& inName, const std::string& inArguments)
 }
 
 
-void FilterEmptyQuotation(std::string& inMessage)
-{
-  std::string double_simple = "\'\'";
-  std::string double_double = "\"\"";
-  
-  while (inMessage.find(double_simple) != std::string::npos)
-  {
-    std::size_t position = inMessage.find(double_simple);
-    inMessage.erase(position, 2);
-  }
+//void ExecuteEcho(std::string& inMessage)
+//{ 
+//  char front = inMessage.front();
+//  char back = inMessage.back();
+//  char simple_quote = '\'';
+//  char double_quote = '\"';
+//
+//  FilterEmptyQuotation(inMessage);
+//
+//
+//
+//  FilterOuterQuotation(inMessage);
+//
+//  if (!((front == simple_quote || front == double_quote) && (back == simple_quote || front == double_quote)))
+//  {
+//    while (inMessage.find("  ") != std::string::npos)
+//    {
+//      std::size_t double_space = inMessage.find("  ");
+//      inMessage.erase(double_space, 1);
+//    }
+//  }
+//  std::cout << inMessage << "\n";
+//}
 
-  while (inMessage.find(double_double) != std::string::npos)
+
+bool CharIsQuote(char& inChar)
+{
+  if (inChar == '\'' || inChar == '\"')
   {
-    std::size_t position = inMessage.find(double_simple);
-    inMessage.erase(position, 2);
+    return true;
   }
+  return false;
 }
 
 
-void FilterOuterQuotation(std::string& inMessage)
+bool CharIsEmpty(char& inChar)
 {
-  char simple_quote = '\'';
-  char double_quote = '\"';
-
-  if (inMessage.front() == simple_quote || inMessage.front() == double_quote)
+  if (inChar == ' ')
   {
-    inMessage.erase(0, 1);
+    return true;
   }
-  if (inMessage.back() == simple_quote || inMessage.back() == double_quote)
-  {
-    inMessage.erase(inMessage.length() - 1, 1);
-  }
+  return false;
 }
 
 
 void ExecuteEcho(std::string& inMessage)
 { 
-  char front = inMessage.front();
-  char back = inMessage.back();
-  char simple_quote = '\'';
-  char double_quote = '\"';
+  char previous_character = NULL;
+  int previous_character_index = 0;
+  bool inside_quotation = false;
+  int index = 0;
 
-  FilterOuterQuotation(inMessage);
-  
-  FilterEmptyQuotation(inMessage);
-
-  if (!((front == simple_quote || front == double_quote) && (back == simple_quote || front == double_quote)))
+  for(std::string::iterator it = inMessage.begin(); it != inMessage.end();) 
   {
-    while (inMessage.find("  ") != std::string::npos)
+    if (previous_character == NULL)
     {
-      std::size_t double_space = inMessage.find("  ");
-      inMessage.erase(double_space, 1);
+      previous_character = *it;
+      ++it;
+      continue;
     }
+    if (CharIsQuote(previous_character))
+    {
+      if (CharIsQuote(*it))
+      {
+        inMessage.erase(previous_character_index, 2);
+        continue;
+      }
+      inside_quotation = true;
+    }
+    if (!inside_quotation)
+    {
+      if (CharIsEmpty(previous_character) && CharIsEmpty(*it))
+      {
+        inMessage.erase(previous_character_index, 1);
+        continue;
+      }
+    }
+    previous_character = *it;
+    previous_character_index = index;
+    ++it;
+    ++index;
   }
+
+  index = 0;
+  for (std::string::iterator it = inMessage.begin(); it != inMessage.end();)
+  {
+    if (CharIsQuote(*it))
+    {
+      inMessage.erase(index, 1);
+      continue;
+    }
+    ++index;
+    ++it;
+  }
+
   std::cout << inMessage << "\n";
 }
 
