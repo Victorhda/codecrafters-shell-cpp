@@ -19,6 +19,38 @@ enum CommandId
 };
 
 
+const std::string GetHomeDirectory()
+{
+  const char* result = std::getenv("HOME");
+  if (result != nullptr)
+  {
+    return result;
+  }
+
+  #ifdef _WIN32
+    const char* user_profile = std::getenv("USERPROFILE");
+    if (user_profile != nullptr)
+    {
+      return user_profile;
+    }
+  #endif
+
+  return "";
+}
+
+
+
+const std::string GetEnvironmentVariable(const char* inName)
+{
+  const char* result = std::getenv(inName);
+  if (result != nullptr)
+  {
+    return result;
+  }
+  return "";
+}
+
+
 bool PathExists(const std::filesystem::path& inPath)
 {
   std::error_code error_code;
@@ -70,9 +102,10 @@ const std::string GetCommandValue(const std::string& inUserInput, const size_t& 
 
 const std::string GetCommandParameters(const std::string& inUserInput, const size_t& inCommandEndPos)
 {
-  if (inUserInput.length() >= inCommandEndPos + 1)
+  size_t parameter_start_pos = inCommandEndPos + 1;
+  if (inUserInput.length() >= parameter_start_pos)
   {
-    return inUserInput.substr(inCommandEndPos + 1);
+    return inUserInput.substr(parameter_start_pos);
   }
   else
     return "";
@@ -81,13 +114,9 @@ const std::string GetCommandParameters(const std::string& inUserInput, const siz
 
 void GetSystemPaths(std::vector<std::filesystem::path>& outSystemPaths)
 {
-  std::string env_paths = std::getenv("PATH");
+  std::string env_paths = GetEnvironmentVariable("PATH");
   
-  char delimiter;
-  if (env_paths.find(';') != std::string::npos)
-    delimiter = ';';
-  else if (env_paths.find(':') != std::string::npos)
-    delimiter = ':';
+  char delimiter = ':';
 
   auto split_paths = env_paths | std::views::split(delimiter);
   for (const auto& path : split_paths)
@@ -200,9 +229,18 @@ void ExecutePwd()
   std::cout << std::filesystem::current_path().string() << "\n";
 }
 
-void ExecuteCd(const std::string& inDirectoryName)
+void ExecuteCd(const std::string& inArgument)
 {
-  std::filesystem::path directory(inDirectoryName);
+  std::filesystem::path directory;
+  if (inArgument == "~")
+  {
+    directory = GetHomeDirectory();
+  }
+  else
+  {
+    directory = inArgument;
+  }
+  
   if (PathExists(directory))
   {
     std::filesystem::current_path(directory);
