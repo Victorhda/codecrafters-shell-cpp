@@ -176,7 +176,7 @@ void ExecuteType(const std::string& inCommandName, const std::map<const std::str
 {
   if (IsShellBuiltin(inCommandName, inCommands))
   {
-    std::cout << inCommandName << " is a shell builtin" << "\n"; 
+    std::cout << inCommandName << " is a shell builtin" << std::endl; 
     return;
   }
 
@@ -185,11 +185,11 @@ void ExecuteType(const std::string& inCommandName, const std::map<const std::str
 
   if (!executable_path.empty())
   {
-    std::cout << inCommandName << " is " << executable_path.replace_extension("").string() << "\n";
+    std::cout << inCommandName << " is " << executable_path.replace_extension("").string() << std::endl;
     return;
   }
 
-  std::cout << inCommandName << ": not found" << "\n";
+  std::cout << inCommandName << ": not found" << std::endl;
 }
 
 
@@ -214,31 +214,6 @@ bool ExecuteExternal(const std::string& inName, const std::string& inArguments)
 }
 
 
-//void ExecuteEcho(std::string& inMessage)
-//{ 
-//  char front = inMessage.front();
-//  char back = inMessage.back();
-//  char simple_quote = '\'';
-//  char double_quote = '\"';
-//
-//  FilterEmptyQuotation(inMessage);
-//
-//
-//
-//  FilterOuterQuotation(inMessage);
-//
-//  if (!((front == simple_quote || front == double_quote) && (back == simple_quote || front == double_quote)))
-//  {
-//    while (inMessage.find("  ") != std::string::npos)
-//    {
-//      std::size_t double_space = inMessage.find("  ");
-//      inMessage.erase(double_space, 1);
-//    }
-//  }
-//  std::cout << inMessage << "\n";
-//}
-
-
 bool CharIsQuote(char& inChar)
 {
   if (inChar == '\'' || inChar == '\"')
@@ -260,62 +235,50 @@ bool CharIsEmpty(char& inChar)
 
 
 void ExecuteEcho(std::string& inMessage)
-{ 
-  char previous_character = NULL;
-  int previous_character_index = 0;
+{
   bool inside_quotation = false;
-  int index = 0;
 
-  for(std::string::iterator it = inMessage.begin(); it != inMessage.end();) 
+  for (int index = 0; index < inMessage.length();)
   {
-    if (previous_character == NULL)
+    if (CharIsQuote(inMessage[index]))
     {
-      previous_character = *it;
-      ++it;
-      continue;
-    }
-    if (CharIsQuote(previous_character))
-    {
-      if (CharIsQuote(*it))
+      if (CharIsQuote(inMessage[index+1]))
       {
-        inMessage.erase(previous_character_index, 2);
+        inMessage.erase(index, 2);
         continue;
       }
-      inside_quotation = true;
+
+      if (!inside_quotation)
+      {
+        inside_quotation = true;
+        inMessage.erase(index, 1);
+        continue;
+      }
+      else
+      {
+        inside_quotation = false;
+        inMessage.erase(index, 1);
+        continue;
+      }
     }
+
     if (!inside_quotation)
     {
-      if (CharIsEmpty(previous_character) && CharIsEmpty(*it))
+      if (CharIsEmpty(inMessage[index]) && CharIsEmpty(inMessage[index+1]))
       {
-        inMessage.erase(previous_character_index, 1);
+        inMessage.erase(index, 1);
         continue;
       }
     }
-    previous_character = *it;
-    previous_character_index = index;
-    ++it;
-    ++index;
+    index++;
   }
-
-  index = 0;
-  for (std::string::iterator it = inMessage.begin(); it != inMessage.end();)
-  {
-    if (CharIsQuote(*it))
-    {
-      inMessage.erase(index, 1);
-      continue;
-    }
-    ++index;
-    ++it;
-  }
-
-  std::cout << inMessage << "\n";
+  std::cout << inMessage << std::endl;
 }
 
 
 void ExecutePwd()
 {
-  std::cout << std::filesystem::current_path().string() << "\n";
+  std::cout << std::filesystem::current_path().string() << std::endl;
 }
 
 
@@ -337,7 +300,7 @@ void ExecuteCd(const std::string& inArgument)
     return;
   }
 
-  std::cout << "cd: " << directory.string() << ": No such file or directory" << "\n";
+  std::cout << "cd: " << directory.string() << ": No such file or directory" << std::endl;
 }
 
 
@@ -396,7 +359,7 @@ int main()
           continue;
       }
       
-      std::cout << input << ": command not found" << "\n";
+      std::cout << input << ": command not found" << std::endl;
     }
   }
 }
