@@ -214,17 +214,11 @@ bool ExecuteExternal(const std::string& inName, const std::string& inArguments)
 }
 
 
-bool CharIsQuote(char& inChar)
-{
-  return inChar == '\'' || inChar == '\"';
-}
+bool CharIsQuote(char& inChar) { return inChar == '\'' || inChar == '\"'; }
 
+bool CharIsEmpty(char& inChar) { return inChar == ' '; }
 
-bool CharIsEmpty(char& inChar)
-{
-  return inChar == ' ';
-}
-
+bool CharIsBackSlash(char& inChar) { return inChar == '\\';}
 
 void ExecuteEcho(std::string& inMessage)
 {
@@ -233,6 +227,12 @@ void ExecuteEcho(std::string& inMessage)
 
   for (int index = 0; index < inMessage.length();)
   {
+    if (CharIsBackSlash(inMessage[index]))
+    {
+      inMessage.erase(index, 1);
+      index++;
+      continue;
+    }
     if (CharIsQuote(inMessage[index]))
     {
       if (inside_quotation)
