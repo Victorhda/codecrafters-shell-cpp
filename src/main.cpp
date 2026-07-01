@@ -227,12 +227,21 @@ void ExecuteEcho(std::string& inMessage)
 
   for (int index = 0; index < inMessage.length();)
   {
-    if (CharIsBackSlash(inMessage[index]))
+    if (!inside_quotation)
     {
-      inMessage.erase(index, 1);
-      index++;
-      continue;
+      if (CharIsBackSlash(inMessage[index]))
+      {
+        inMessage.erase(index, 1);
+        index++;
+        continue;
+      }
+      else if (CharIsEmpty(inMessage[index]) && CharIsEmpty(inMessage[index+1]))
+      {
+        inMessage.erase(index, 1);
+        continue;
+      }
     }
+
     if (CharIsQuote(inMessage[index]))
     {
       if (inside_quotation)
@@ -256,15 +265,6 @@ void ExecuteEcho(std::string& inMessage)
       {
         inside_quotation = true;
         inside_quotation_char = inMessage[index];
-        inMessage.erase(index, 1);
-        continue;
-      }
-    }
-
-    if (!inside_quotation && CharIsEmpty(inMessage[index]))
-    {
-      if (CharIsEmpty(inMessage[index+1]))
-      {
         inMessage.erase(index, 1);
         continue;
       }
