@@ -241,12 +241,21 @@ void ExecuteEcho(std::string& inMessage)
         continue;
       }
     }
+    else 
+    {
+      if (inside_quotation_char == '\"' && CharIsBackSlash(inMessage[index]))
+      {
+        inMessage.erase(index, 1);
+        index++;
+        continue;
+      }
+    }
 
     if (CharIsQuote(inMessage[index]))
     {
       if (inside_quotation)
       {
-        if (inside_quotation_char == '\"' && inMessage[index] == '\'') 
+        if (inside_quotation_char == '\"' && inMessage[index] == '\'')
         {
         }
         if (inMessage[index] == inside_quotation_char)
