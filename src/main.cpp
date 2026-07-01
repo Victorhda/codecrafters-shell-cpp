@@ -216,55 +216,54 @@ bool ExecuteExternal(const std::string& inName, const std::string& inArguments)
 
 bool CharIsQuote(char& inChar)
 {
-  if (inChar == '\'' || inChar == '\"')
-  {
-    return true;
-  }
-  return false;
+  return inChar == '\'' || inChar == '\"';
 }
 
 
 bool CharIsEmpty(char& inChar)
 {
-  if (inChar == ' ')
-  {
-    return true;
-  }
-  return false;
+  return inChar == ' ';
 }
 
 
 void ExecuteEcho(std::string& inMessage)
 {
   bool inside_quotation = false;
+  char inside_quotation_char = '\0';
 
   for (int index = 0; index < inMessage.length();)
   {
     if (CharIsQuote(inMessage[index]))
     {
-      if (CharIsQuote(inMessage[index+1]))
+      if (inside_quotation)
+      {
+        if (inside_quotation_char == '\"' && inMessage[index] == '\'') 
+        {
+        }
+        if (inMessage[index] == inside_quotation_char)
+        {
+          inside_quotation = false;
+          inMessage.erase(index, 1);
+          continue;
+        }
+      }
+      else if (CharIsQuote(inMessage[index+1]) && inMessage[index] == inMessage[index+1])
       {
         inMessage.erase(index, 2);
         continue;
       }
-
-      if (!inside_quotation)
-      {
-        inside_quotation = true;
-        inMessage.erase(index, 1);
-        continue;
-      }
       else
       {
-        inside_quotation = false;
+        inside_quotation = true;
+        inside_quotation_char = inMessage[index];
         inMessage.erase(index, 1);
         continue;
       }
     }
 
-    if (!inside_quotation)
+    if (!inside_quotation && CharIsEmpty(inMessage[index]))
     {
-      if (CharIsEmpty(inMessage[index]) && CharIsEmpty(inMessage[index+1]))
+      if (CharIsEmpty(inMessage[index+1]))
       {
         inMessage.erase(index, 1);
         continue;
